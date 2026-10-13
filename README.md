@@ -56,15 +56,20 @@ El repositorio ya trae el flujo `.github/workflows/deploy.yml`, que en cada push
 
 **Configurar una sola vez:** en GitHub, entrá al repositorio → **Settings** → **Pages** → en **Build and deployment** → **Source**, elegí **GitHub Actions**. Si queda en "Deploy from a branch", GitHub publica el código sin compilar y la app no funciona.
 
-**Subir los cambios** (desde la carpeta del proyecto):
+**Trabajar desde Windows:** el repositorio de GitHub es la copia principal. Clonalo una vez:
 
 ```powershell
-git init
+git clone https://github.com/BradithanApps/fitweek.git
+cd fitweek
+npm install
+```
+
+Para publicar un cambio:
+
+```powershell
 git add .
-git commit -m "FitWeek"
-git branch -M main
-git remote add origin https://github.com/BradithanApps/fitweek.git
-git push -u origin main
+git commit -m "Describe el cambio"
+git push
 ```
 
 Si es la primera vez que usás `git commit`, Git te puede pedir tu nombre y email:
@@ -73,8 +78,6 @@ Si es la primera vez que usás `git commit`, Git te puede pedir tu nombre y emai
 git config --global user.name "Tu nombre"
 git config --global user.email "tu@email.com"
 ```
-
-Para los cambios siguientes alcanza con `git add .`, `git commit -m "mensaje"` y `git push`.
 
 Seguí el avance en la pestaña **Actions** del repositorio. Cuando termine, la app queda en:
 
