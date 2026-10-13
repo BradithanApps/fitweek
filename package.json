@@ -1,0 +1,21 @@
+{
+  "name": "fitweek",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "FitWeek: PWA offline para entrenar con un ciclo de días rotativo.",
+  "scripts": {
+    "css": "tailwindcss -i src/styles/input.css -o src/styles/app.css --minify",
+    "css:watch": "tailwindcss -i src/styles/input.css -o src/styles/app.css --watch",
+    "dev": "npm run css && concurrently -k -n css,vite -c green,cyan \"npm:css:watch\" \"vite\"",
+    "build": "npm run css && vite build && node scripts/build-sw.mjs",
+    "preview": "vite preview --host",
+    "test": "node --test \"tests/**/*.test.js\""
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "4.3.3",
+    "concurrently": "10.0.6",
+    "tailwindcss": "4.3.3",
+    "vite": "7.3.7"
+  }
+}
