@@ -9,11 +9,13 @@ import { navigate } from '../app/router.js';
 import { sessionVolume, sessionSetCount, exerciseHistory } from '../domain/stats.js';
 import { getSession, deleteSession, listSessions } from '../db/repos/sessions.js';
 import { getExercise } from '../db/repos/exercises.js';
+import { listDays } from '../db/repos/cycle.js';
+import { sessionDayNumber } from '../domain/cycle.js';
 import { fmtWeight, dayLabel } from './shared.js';
 
 /** Detalle de una sesión pasada. */
 export async function SessionDetail({ params }) {
-  const s = await getSession(params.id);
+  const [s, days] = await Promise.all([getSession(params.id), listDays()]);
   if (!s || s.status !== 'done') {
     navigate('/progress', { replace: true });
     return h('div');
@@ -37,7 +39,7 @@ export async function SessionDetail({ params }) {
   return h(
     'div',
     { class: 'pb-4' },
-    header({ title: s.dayName, subtitle: `${dayLabel(s.dayNumber)} · ${fmtDateLong(s.date)}`, back: '/progress', actions: del }),
+    header({ title: s.dayName, subtitle: `${dayLabel(sessionDayNumber(days, s))} · ${fmtDateLong(s.date)}`, back: '/progress', actions: del }),
     h(
       'div',
       { class: 'card mb-4 grid grid-cols-3 divide-x divide-line py-3 text-center' },

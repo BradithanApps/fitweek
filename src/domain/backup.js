@@ -4,7 +4,7 @@ import { isValidKey } from './dates.js';
 import { cleanName, nameKey } from './text.js';
 
 export const BACKUP_SCHEMA = 1;
-const SETTINGS_KEYS = ['lang', 'name', 'unit', 'weightStep', 'defaultRest', 'restWeekdays', 'sound'];
+const SETTINGS_KEYS = ['lang', 'name', 'unit', 'weightStep', 'defaultRest', 'restWeekdays', 'sound', 'soundInSilent'];
 
 export function buildBackup({ settings, exercises, cycleDays, sessions }, now = new Date()) {
   const s = {};
@@ -97,6 +97,7 @@ export function parseBackup(raw) {
   if (num(st.defaultRest, 0, 3600) !== null) settings.defaultRest = st.defaultRest;
   if (Array.isArray(st.restWeekdays)) settings.restWeekdays = [...new Set(st.restWeekdays.filter((n) => Number.isInteger(n) && n >= 0 && n <= 6))];
   if (typeof st.sound === 'boolean') settings.sound = st.sound;
+  if (typeof st.soundInSilent === 'boolean') settings.soundInSilent = st.soundInSilent;
 
   const data = { settings, exercises, cycleDays, sessions };
   return { ok: true, data, counts: { days: cycleDays.length, exercises: exercises.length, sessions: sessions.length } };

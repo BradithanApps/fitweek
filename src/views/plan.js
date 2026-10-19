@@ -7,9 +7,10 @@ import { t, fmtRelDays } from '../i18n/index.js';
 import { app } from '../app/state.js';
 import { navigate } from '../app/router.js';
 import { toKey, diffDays } from '../domain/dates.js';
-import { estimateMinutes, lastDoneByDay, todayDay } from '../domain/cycle.js';
+import { estimateMinutes, lastDoneByDay, todayDay, moveItem } from '../domain/cycle.js';
 import { exampleCycle } from '../domain/seed.js';
-import { listDays, addDay, moveDay, deleteDay } from '../db/repos/cycle.js';
+import { listDays, addDay, reorderDays, deleteDay } from '../db/repos/cycle.js';
+import { makeSortable } from '../ui/components/sortable.js';
 import { listSessions } from '../db/repos/sessions.js';
 import { listExercises } from '../db/repos/exercises.js';
 import { addCycle } from '../db/data.js';
@@ -40,15 +41,15 @@ export default async function PlanView({ refresh }) {
       'button',
       {
         type: 'button',
-        class: `icon-btn ${editing ? 'bg-lime text-lime-ink' : 'text-muted'}`,
-        'aria-label': editing ? t('common.done') : t('plan.edit'),
+        class: `btn min-h-10 px-3.5 text-[15px] ${editing ? 'btn-primary' : 'btn-secondary'}`,
         'aria-pressed': String(editing),
         onClick: () => {
           editing = !editing;
           refresh();
         },
       },
-      icon(editing ? 'check' : 'pencil'),
+      icon(editing ? 'check' : 'grip', 'size-4.5'),
+      editing ? t('common.done') : t('plan.edit'),
     );
 
   const head = header({ title: t('plan.title'), subtitle: days.length ? t('plan.subtitle', { count: days.length }) : null, actions: editBtn });
@@ -97,7 +98,7 @@ export default async function PlanView({ refresh }) {
 
   const list = h(
     'section',
-    { class: 'card divide-y divide-line overflow-hidden' },
+    { class: `card divide-y divide-line ${editing ? '' : 'overflow-hidden'}`, 'data-sort-list': '' },
     days.map((d, i) => {
       const isNext = d.id === next?.id;
       const last = lastByDay[d.id];
@@ -112,13 +113,14 @@ export default async function PlanView({ refresh }) {
         h('div', { class: 'truncate text-xs text-faint' }, lastText),
       );
       if (editing) {
+        const num = numberBadge(i + 1);
+        num.dataset.sortNumber = '';
         return h(
           'div',
-          { class: 'flex min-h-18 items-center gap-2 px-3 py-2' },
-          numberBadge(i + 1),
+          { class: 'flex min-h-18 items-center gap-2 bg-surface py-2 pr-2 pl-1 first:rounded-t-[1.25rem] last:rounded-b-[1.25rem]', dataset: { sortItem: d.id } },
+          h('button', { type: 'button', class: 'drag-handle', 'data-drag-handle': '', 'aria-label': t('plan.dragHandle', { name: d.name }) }, icon('grip', 'size-6')),
+          num,
           body,
-          h('button', { type: 'button', class: 'icon-btn text-muted', disabled: i === 0, 'aria-label': t('common.moveUp'), onClick: async () => (await moveDay(d.id, -1), refresh()) }, icon('up')),
-          h('button', { type: 'button', class: 'icon-btn text-muted', disabled: i === days.length - 1, 'aria-label': t('common.moveDown'), onClick: async () => (await moveDay(d.id, 1), refresh()) }, icon('down')),
           h(
             'button',
             {
@@ -146,14 +148,22 @@ export default async function PlanView({ refresh }) {
     }),
   );
 
+  if (editing)
+    makeSortable(list, {
+      onMove: async (from, to) => {
+        await reorderDays(moveItem(days.map((d) => d.id), from, to));
+        refresh();
+      },
+    });
+
   return h(
     'div',
     null,
     head,
+    editing && h('p', { class: 'mb-3 flex items-center gap-2 px-1 text-sm text-muted' }, icon('grip', 'size-4 shrink-0 text-lime'), t('plan.reorderHint')),
     list,
-    h('button', { type: 'button', class: 'btn btn-secondary mt-3 min-h-14 w-full', onClick: newDay }, icon('plus'), t('plan.addDay')),
-    editing && h('p', { class: 'mt-3 px-1 text-sm text-muted' }, t('plan.reorderHint')),
-    howItWorks(),
+    !editing && h('button', { type: 'button', class: 'btn btn-secondary mt-3 min-h-14 w-full', onClick: newDay }, icon('plus'), t('plan.addDay')),
+    !editing && howItWorks(),
   );
 }
 

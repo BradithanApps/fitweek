@@ -91,3 +91,22 @@ test('estimación de minutos', () => {
   const m = estimateMinutes({ items: [{ sets: 4, rest: 90 }, { sets: 3, rest: 90 }] }, 90);
   assert.ok(m >= 15 && m <= 25, `estimado ${m}`);
 });
+
+import { moveItem, sessionDayNumber } from '../src/domain/cycle.js';
+
+test('moveItem: intercambiar Día 1 y Día 2, y mover al final', () => {
+  assert.deepEqual(moveItem(['a', 'b', 'c', 'd'], 0, 1), ['b', 'a', 'c', 'd']);
+  assert.deepEqual(moveItem(['a', 'b', 'c', 'd'], 1, 0), ['b', 'a', 'c', 'd']);
+  assert.deepEqual(moveItem(['a', 'b', 'c', 'd'], 0, 3), ['b', 'c', 'd', 'a']);
+  assert.deepEqual(moveItem(['a', 'b', 'c', 'd'], 3, 0), ['d', 'a', 'b', 'c']);
+  assert.deepEqual(moveItem(['a', 'b'], 1, 1), ['a', 'b']);
+});
+
+test('el número de Día de una sesión sigue al orden actual del ciclo', () => {
+  const s = { cycleDayId: 'd2', dayNumber: 2 };
+  // Se intercambian Día 1 y Día 2: la sesión de "d2" ahora es Día 1
+  const swapped = days.map((d) => ({ ...d, order: d.id === 'd1' ? 1 : d.id === 'd2' ? 0 : d.order }));
+  assert.equal(sessionDayNumber(swapped, s), 1);
+  // Si el Día se borró, se usa el número guardado
+  assert.equal(sessionDayNumber(days.filter((d) => d.id !== 'd2'), s), 2);
+});

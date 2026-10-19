@@ -8,9 +8,11 @@ import { navigate } from '../app/router.js';
 import { sessionVolume, sessionSetCount, personalRecords } from '../domain/stats.js';
 import { getSession, listSessions } from '../db/repos/sessions.js';
 import { fmtWeight, dayLabel } from './shared.js';
+import { listDays } from '../db/repos/cycle.js';
+import { sessionDayNumber } from '../domain/cycle.js';
 
 export default async function SummaryView({ params }) {
-  const [session, all] = await Promise.all([getSession(params.id), listSessions()]);
+  const [session, all, days] = await Promise.all([getSession(params.id), listSessions(), listDays()]);
   if (!session) {
     navigate('/', { replace: true });
     return h('div');
@@ -39,7 +41,7 @@ export default async function SummaryView({ params }) {
       { class: 'flex flex-col items-center text-center' },
       ring({ value: 1, size: 120, stroke: 10, children: h('span', { class: 'text-lime' }, icon('check', 'size-12')) }),
       h('h1', { class: 'mt-5 text-[28px] font-bold' }, t('summary.title')),
-      h('p', { class: 'mt-1 text-muted' }, `${dayLabel(session.dayNumber)} · ${session.dayName}`),
+      h('p', { class: 'mt-1 text-muted' }, `${dayLabel(sessionDayNumber(days, session))} · ${session.dayName}`),
     ),
     h(
       'section',

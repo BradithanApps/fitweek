@@ -7,12 +7,14 @@ import { app, unit } from '../app/state.js';
 import { toKey } from '../domain/dates.js';
 import { weeklyGoal, trainedDaysInWeek, weekVolume, streakWeeks, bestStreakWeeks, weeklyVolumes, personalRecords, doneSessions, sessionVolume } from '../domain/stats.js';
 import { listSessions } from '../db/repos/sessions.js';
+import { listDays } from '../db/repos/cycle.js';
+import { sessionDayNumber } from '../domain/cycle.js';
 import { fmtWeight, dayLabel } from './shared.js';
 
 let showAll = false;
 
 export default async function ProgressView({ refresh }) {
-  const sessions = await listSessions();
+  const [sessions, days] = await Promise.all([listSessions(), listDays()]);
   const done = doneSessions(sessions).sort((a, b) => b.endedAt - a.endedAt);
   const today = toKey();
   const goal = weeklyGoal(app.settings.restWeekdays);
@@ -85,7 +87,7 @@ export default async function ProgressView({ refresh }) {
         'a',
         { href: `#/history/${s.id}`, class: 'flex min-h-16 items-center gap-3 px-4 py-3 active:bg-surface-2' },
         h('div', { class: 'w-12 shrink-0 text-center' }, h('div', { class: 'text-lg font-bold tabular' }, s.date.slice(8)), h('div', { class: 'text-xs text-muted uppercase' }, fmtMonth(s.date))),
-        h('div', { class: 'min-w-0 flex-1' }, h('div', { class: 'truncate font-semibold' }, s.dayName), h('div', { class: 'text-sm text-muted' }, [dayLabel(s.dayNumber), fmtDuration(s.endedAt - s.startedAt), `${fmtCompact(sessionVolume(s))} ${unit()}`].filter(Boolean).join(' · '))),
+        h('div', { class: 'min-w-0 flex-1' }, h('div', { class: 'truncate font-semibold' }, s.dayName), h('div', { class: 'text-sm text-muted' }, [dayLabel(sessionDayNumber(days, s)), fmtDuration(s.endedAt - s.startedAt), `${fmtCompact(sessionVolume(s))} ${unit()}`].filter(Boolean).join(' · '))),
         h('span', { class: 'text-faint' }, icon('chevronRight')),
       ),
     ),

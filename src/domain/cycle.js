@@ -117,3 +117,20 @@ export function estimateMinutes(day, defaultRest = 90) {
   if (!seconds) return 0;
   return Math.max(5, Math.round(seconds / 60 / 5) * 5);
 }
+
+/** Mueve el elemento de la posición `from` a `to` (devuelve una lista nueva). */
+export function moveItem(list, from, to) {
+  const out = [...list];
+  if (from < 0 || from >= out.length) return out;
+  const [item] = out.splice(from, 1);
+  out.splice(Math.max(0, Math.min(to, out.length)), 0, item);
+  return out;
+}
+
+/**
+ * Número de Día a mostrar para una sesión: la posición ACTUAL de su Día en el ciclo
+ * (si se reordenó, se actualiza). Si el Día ya no existe, el número que tenía al entrenar.
+ */
+export function sessionDayNumber(days, session) {
+  return dayNumber(days, session.cycleDayId) ?? session.dayNumber ?? null;
+}

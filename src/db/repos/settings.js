@@ -8,6 +8,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   defaultRest: 90,
   restWeekdays: [5, 6],
   sound: true,
+  soundInSilent: false,
   lastBackupAt: null,
   onboarded: false,
   todayPick: null, // { date, dayId } elección manual del Día de hoy

@@ -7,7 +7,7 @@ import { app, unit } from '../app/state.js';
 import { navigate } from '../app/router.js';
 import { startWorkout, pickToday } from '../app/actions.js';
 import { toKey, diffDays, weekdayIndex } from '../domain/dates.js';
-import { projectWeek, todayDay, nextAfter, estimateMinutes, dayNumber, lastDoneByDay } from '../domain/cycle.js';
+import { projectWeek, todayDay, nextAfter, estimateMinutes, dayNumber, lastDoneByDay, sessionDayNumber } from '../domain/cycle.js';
 import { weeklyGoal, trainedDaysInWeek, weekVolume, streakWeeks, sessionVolume, sessionSetCount, doneSessions } from '../domain/stats.js';
 import { listDays } from '../db/repos/cycle.js';
 import { listSessions, getActiveSession } from '../db/repos/sessions.js';
@@ -56,7 +56,7 @@ export default async function HomeView() {
 
   // ——— Tarjeta principal ———
   let main;
-  if (active) main = activeCard(active);
+  if (active) main = activeCard(active, days);
   else if (!days.length)
     main = emptyState({
       iconName: 'plan',
@@ -64,7 +64,7 @@ export default async function HomeView() {
       text: t('home.noCycleText'),
       action: h('a', { href: '#/plan', class: 'btn btn-primary min-h-14 w-full' }, t('home.goPlan')),
     });
-  else if (doneToday) main = doneCard(doneToday);
+  else if (doneToday) main = doneCard(doneToday, days);
   else main = todayCard(dToday, days, sessions, today);
 
   // ——— Progreso semanal ———
@@ -244,7 +244,7 @@ function changeSheet(days, currentId, lastByDay, today) {
   });
 }
 
-function activeCard(s) {
+function activeCard(s, days) {
   const total = s.entries.reduce((n, e) => n + e.target.sets, 0);
   const done = sessionSetCount(s);
   return h(
@@ -252,17 +252,17 @@ function activeCard(s) {
     { class: 'card border-lime/50 p-4' },
     h('div', { class: 'mb-2 flex items-center gap-2 text-[15px] font-semibold text-lime' }, icon('play', 'size-4'), t('home.inProgress')),
     h('div', { class: 'text-2xl font-bold' }, s.dayName),
-    h('p', { class: 'mt-1 text-muted' }, `${dayLabel(s.dayNumber)} · ${t('home.setsProgress', { done, total })} · ${fmtDuration(Date.now() - s.startedAt)}`),
+    h('p', { class: 'mt-1 text-muted' }, `${dayLabel(sessionDayNumber(days, s))} · ${t('home.setsProgress', { done, total })} · ${fmtDuration(Date.now() - s.startedAt)}`),
     h('a', { href: '#/workout', class: 'btn btn-primary mt-4 min-h-14 w-full text-lg' }, t('home.continue'), icon('arrowRight')),
   );
 }
 
-function doneCard(s) {
+function doneCard(s, days) {
   return h(
     'section',
     { class: 'card p-4' },
     h('div', { class: 'mb-2 flex items-center gap-2 text-[15px] font-semibold text-lime' }, icon('check'), t('home.doneToday')),
-    h('a', { href: `#/history/${s.id}`, class: 'block' }, h('div', { class: 'text-2xl font-bold' }, s.dayName), h('p', { class: 'mt-1 text-muted' }, `${dayLabel(s.dayNumber)} · ${fmtDuration((s.endedAt ?? s.startedAt) - s.startedAt)} · ${fmtCompact(sessionVolume(s))} ${unit()}`)),
+    h('a', { href: `#/history/${s.id}`, class: 'block' }, h('div', { class: 'text-2xl font-bold' }, s.dayName), h('p', { class: 'mt-1 text-muted' }, `${dayLabel(sessionDayNumber(days, s))} · ${fmtDuration((s.endedAt ?? s.startedAt) - s.startedAt)} · ${fmtCompact(sessionVolume(s))} ${unit()}`)),
   );
 }
 

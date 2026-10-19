@@ -7,9 +7,10 @@ import { t } from '../i18n/index.js';
 import { app } from '../app/state.js';
 import { navigate } from '../app/router.js';
 import { startWorkout } from '../app/actions.js';
-import { estimateMinutes, dayNumber } from '../domain/cycle.js';
+import { estimateMinutes, dayNumber, moveItem } from '../domain/cycle.js';
+import { makeSortable } from '../ui/components/sortable.js';
 import { nameKey } from '../domain/text.js';
-import { listDays, getDay, saveDay, deleteDay, duplicateDay } from '../db/repos/cycle.js';
+import { listDays, getDay, saveDay, deleteDay, duplicateDay, reorderDays } from '../db/repos/cycle.js';
 import { listExercises, upsertExerciseByName, renameExercise, saveExercise, getExercise } from '../db/repos/exercises.js';
 import { getActiveSession } from '../db/repos/sessions.js';
 import { exerciseSheet, textSheet, fmtTarget, fmtWeight, dayLabel } from './shared.js';
@@ -77,13 +78,39 @@ export default async function DayView({ params, refresh }) {
     });
   };
 
-  const move = (idx, dir) => {
-    const items = [...day.items];
-    const j = idx + dir;
-    if (j < 0 || j >= items.length) return;
-    [items[idx], items[j]] = [items[j], items[idx]];
-    saveItems(items);
-  };
+  const positionSheet = () =>
+    openSheet({
+      title: t('day.positionTitle'),
+      content: (close) =>
+        h(
+          'div',
+          null,
+          h('p', { class: 'mb-4 text-sm text-muted' }, t('day.positionHint', { name: day.name })),
+          h(
+            'div',
+            { class: 'grid grid-cols-4 gap-2' },
+            days.map((d, i) =>
+              h(
+                'button',
+                {
+                  type: 'button',
+                  'aria-pressed': String(i + 1 === n),
+                  class: `flex min-h-16 flex-col items-center justify-center rounded-2xl border ${i + 1 === n ? 'border-lime bg-lime text-lime-ink' : 'border-line bg-surface-2'}`,
+                  onClick: async () => {
+                    close();
+                    if (i + 1 === n) return;
+                    await reorderDays(moveItem(days.map((x) => x.id), n - 1, i));
+                    toast(t('day.positionDone', { name: day.name, n: i + 1 }));
+                    refresh();
+                  },
+                },
+                h('span', { class: 'text-xs opacity-70' }, t('common.dayN', { n: '' }).trim()),
+                h('span', { class: 'text-2xl font-bold tabular' }, String(i + 1)),
+              ),
+            ),
+          ),
+        ),
+    });
 
   const menu = () =>
     openSheet({
@@ -103,6 +130,11 @@ export default async function DayView({ params, refresh }) {
               },
             });
           }),
+          days.length > 1 &&
+            menuBtn('grip', t('day.position', { n }), () => {
+              close();
+              positionSheet();
+            }),
           menuBtn('list', t('day.duplicate'), async () => {
             close();
             const copy = await duplicateDay(day.id, t('day.copySuffix'));
@@ -137,7 +169,7 @@ export default async function DayView({ params, refresh }) {
             refresh();
           },
         },
-        icon(reorder ? 'check' : 'swap'),
+        icon(reorder ? 'check' : 'grip'),
       ),
     h('button', { type: 'button', class: 'icon-btn text-muted', 'aria-label': t('day.menu'), onClick: menu }, icon('pencil')),
   ];
@@ -162,7 +194,7 @@ export default async function DayView({ params, refresh }) {
   const list = day.items.length
     ? h(
         'section',
-        { class: 'mt-4 grid gap-2' },
+        { class: 'mt-4 grid gap-2', 'data-sort-list': '' },
         day.items.map((item, i) => {
           const ex = exById.get(item.exerciseId);
           const target = fmtTarget({ sets: item.sets, reps: item.reps, mode: ex?.mode });
@@ -176,11 +208,9 @@ export default async function DayView({ params, refresh }) {
           if (reorder)
             return h(
               'div',
-              { class: 'card flex min-h-18 items-center gap-2 px-3 py-2' },
-              iconBadge('dumbbell'),
+              { class: 'card flex min-h-18 items-center gap-2 py-2 pr-4 pl-1', dataset: { sortItem: String(i) } },
+              h('button', { type: 'button', class: 'drag-handle', 'data-drag-handle': '', 'aria-label': t('plan.dragHandle', { name: ex?.name ?? '' }) }, icon('grip', 'size-6')),
               body,
-              h('button', { type: 'button', class: 'icon-btn text-muted', disabled: i === 0, 'aria-label': t('common.moveUp'), onClick: () => move(i, -1) }, icon('up')),
-              h('button', { type: 'button', class: 'icon-btn text-muted', disabled: i === day.items.length - 1, 'aria-label': t('common.moveDown'), onClick: () => move(i, 1) }, icon('down')),
             );
           return h(
             'button',
@@ -194,12 +224,16 @@ export default async function DayView({ params, refresh }) {
     : h('div', { class: 'mt-4' }, emptyState({ title: t('day.emptyTitle'), text: t('day.emptyText') }));
 
   if (!day.items.length) reorder = false;
+  if (reorder && day.items.length > 1)
+    makeSortable(list, {
+      onMove: (from, to) => saveItems(moveItem(day.items, from, to)),
+    });
 
   return h(
     'div',
     null,
     header({ title: day.name, subtitle, back: '/plan', actions }),
-    startBtn,
+    reorder ? h('p', { class: 'flex items-center gap-2 px-1 text-sm text-muted' }, icon('grip', 'size-4 shrink-0 text-lime'), t('day.reorderHint')) : startBtn,
     list,
     h('button', { type: 'button', class: 'btn btn-secondary mt-3 min-h-14 w-full text-lime', onClick: addExercise }, icon('plus'), t('day.addExercise')),
   );

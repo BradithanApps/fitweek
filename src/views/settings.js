@@ -11,6 +11,7 @@ import { buildBackup, parseBackup, mergeData } from '../domain/backup.js';
 import { cleanName } from '../domain/text.js';
 import { readAll, writeAll, eraseAll } from '../db/data.js';
 import { storageInfo, requestPersistence } from '../db/db.js';
+import { testSound, canPlayInSilent } from '../app/device.js';
 
 export default async function SettingsView({ refresh }) {
   const st = app.settings;
@@ -93,7 +94,29 @@ export default async function SettingsView({ refresh }) {
       segmented({ label: t('settings.rest'), value: st.defaultRest, options: [60, 90, 120, 180].map((n) => ({ value: n, label: n < 120 ? `${n}s` : `${n / 60}m` })), onChange: (defaultRest) => updateSettings({ defaultRest }) }),
     ),
     h('div', { class: 'px-4 py-3.5' }, h('div', { class: 'font-semibold' }, t('settings.restDays')), h('div', { class: 'mb-2 text-sm text-muted' }, t('settings.restDaysHint', { n: 7 - st.restWeekdays.length })), restDays),
-    row(t('settings.sound'), t('settings.soundHint'), toggle({ checked: st.sound, label: t('settings.sound'), onChange: (sound) => updateSettings({ sound }) })),
+    h(
+      'div',
+      { class: 'px-4 py-3.5' },
+      h(
+        'div',
+        { class: 'flex items-center justify-between gap-3' },
+        h('div', { class: 'min-w-0' }, h('div', { class: 'font-semibold' }, t('settings.sound')), h('div', { class: 'text-sm text-muted' }, t('settings.soundHint'))),
+        toggle({
+          checked: st.sound,
+          label: t('settings.sound'),
+          onChange: async (sound) => {
+            if (sound) testSound();
+            await updateSettings({ sound });
+            refresh();
+          },
+        }),
+      ),
+      st.sound &&
+        h('button', { type: 'button', class: 'btn btn-secondary mt-3 min-h-11 w-full text-[15px]', onClick: () => testSound() }, icon('sound', 'size-5 text-lime'), t('settings.soundTest')),
+    ),
+    st.sound &&
+      canPlayInSilent() &&
+      row(t('settings.soundSilent'), t('settings.soundSilentHint'), toggle({ checked: st.soundInSilent, label: t('settings.soundSilent'), onChange: (soundInSilent) => updateSettings({ soundInSilent }) })),
   );
 
   // ——— Datos ———

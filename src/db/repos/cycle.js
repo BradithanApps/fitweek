@@ -48,3 +48,16 @@ export async function duplicateDay(id, suffix) {
   await saveDay(copy);
   return copy;
 }
+
+/** Guarda un orden nuevo completo: orderedIds es la lista de ids en la posición deseada. */
+export function reorderDays(orderedIds) {
+  return tx(['cycleDays'], 'readwrite', async (t) => {
+    const store = t.objectStore('cycleDays');
+    const days = await req(store.getAll());
+    const pos = new Map(orderedIds.map((id, i) => [id, i]));
+    // Los Días que no vinieron en la lista (no debería pasar) quedan al final, en su orden.
+    const rest = sortDays(days.filter((d) => !pos.has(d.id)));
+    rest.forEach((d, i) => pos.set(d.id, orderedIds.length + i));
+    await Promise.all(days.map((d) => req(store.put({ ...d, order: pos.get(d.id) }))));
+  });
+}

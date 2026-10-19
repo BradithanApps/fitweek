@@ -287,6 +287,50 @@
     animation: var(--animate-enter);
   }
 
+  /* Reordenar arrastrando */
+  .drag-handle {
+    display: inline-grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    flex-shrink: 0;
+    border-radius: 0.75rem;
+    color: var(--color-muted);
+    cursor: grab;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  .drag-handle:active {
+    cursor: grabbing;
+    color: var(--color-lime);
+  }
+  [data-sort-item] {
+    position: relative;
+  }
+  [data-sort-item].is-dragging {
+    z-index: 5;
+    background: var(--color-surface-2);
+    box-shadow: 0 12px 30px rgb(0 0 0 / 0.45);
+    border-radius: 1rem;
+    outline: 1px solid rgb(163 230 53 / 0.5);
+  }
+  [data-sort-item].sort-shift {
+    transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  /* Aviso visual de fin de descanso */
+  .rest-done {
+    animation: rest-flash 0.9s ease-in-out 3;
+  }
+  @keyframes rest-flash {
+    50% {
+      border-color: var(--color-lime);
+      box-shadow: 0 0 0 3px rgb(163 230 53 / 0.35);
+    }
+  }
+
   .ring-track {
     stroke: var(--color-surface-2);
   }

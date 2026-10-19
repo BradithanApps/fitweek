@@ -6,11 +6,15 @@ import { t, fmtTime, fmtClock, fmtNum } from '../i18n/index.js';
 import { app, unit } from '../app/state.js';
 import { navigate } from '../app/router.js';
 import { completeSet, persist, finishWorkout, abandonWorkout, addExerciseToSession } from '../app/actions.js';
-import { unlockAudio, beep, keepScreenOn } from '../app/device.js';
+import { unlockAudio, restDoneSound, keepScreenOn } from '../app/device.js';
 import * as W from '../domain/workout.js';
 import { getActiveSession } from '../db/repos/sessions.js';
 import { exercisesMap, listExercises } from '../db/repos/exercises.js';
+import { listDays } from '../db/repos/cycle.js';
+import { sessionDayNumber } from '../domain/cycle.js';
 import { exerciseSheet, fmtTarget, fmtWeight, dayLabel, parseWeight } from './shared.js';
+
+let chimedFor = 0;
 
 async function loadActive() {
   const session = await getActiveSession();
@@ -24,7 +28,7 @@ export async function WorkoutOverview({ refresh }) {
   const session = await loadActive();
   if (!session) return h('div');
   keepScreenOn(true);
-  const exMap = await exercisesMap();
+  const [exMap, days] = await Promise.all([exercisesMap(), listDays()]);
   const doneCount = session.entries.filter(W.entryDone).length;
   const nextIdx = W.nextPendingIndex(session);
 
@@ -109,7 +113,7 @@ export async function WorkoutOverview({ refresh }) {
       null,
       header({
         title: session.dayName,
-        subtitle: `${dayLabel(session.dayNumber)} · ${t('workout.exercisesDone', { done: doneCount, total: session.entries.length })}`,
+        subtitle: `${dayLabel(sessionDayNumber(days, session))} · ${t('workout.exercisesDone', { done: doneCount, total: session.entries.length })}`,
         back: '/',
       }),
       h(
@@ -204,7 +208,6 @@ export async function WorkoutExercise({ params, refresh }) {
       h('button', { type: 'button', class: 'btn btn-ghost min-h-10 px-3 text-sm', onClick: () => adjustRest(null) }, t('workout.skipRest')),
     ),
   );
-  let beeped = false;
   const tick = () => {
     const end = session.restEndsAt;
     if (!end) {
@@ -218,9 +221,10 @@ export async function WorkoutExercise({ params, refresh }) {
       restText.textContent = t('workout.restDone');
       restText.classList.add('text-lime');
       setRing(restRing, 0);
-      if (!beeped && Date.now() - end < 5000) {
-        beeped = true;
-        if (st.sound) beep();
+      if (chimedFor !== end && Date.now() - end < 5000) {
+        chimedFor = end; // una sola vez por descanso, aunque la pantalla se redibuje
+        if (st.sound) restDoneSound();
+        restCard.classList.add('rest-done');
       }
       if (Date.now() - end > 20000) {
         restCard.hidden = true;
@@ -228,12 +232,12 @@ export async function WorkoutExercise({ params, refresh }) {
       return;
     }
     restText.classList.remove('text-lime');
+    restCard.classList.remove('rest-done');
     restText.textContent = fmtClock(left + 999);
     setRing(restRing, left / total);
   };
   async function adjustRest(delta) {
     session = { ...session, restEndsAt: delta == null ? null : Math.max(Date.now(), session.restEndsAt ?? Date.now()) + delta * 1000 };
-    beeped = false;
     await persist(session);
     tick();
   }

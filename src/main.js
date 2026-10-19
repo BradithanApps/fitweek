@@ -4,7 +4,7 @@ import { toast } from './ui/components/toast.js';
 import { t, setLang, detectLang } from './i18n/index.js';
 import { app, initSettings, on } from './app/state.js';
 import { route, setNotFound, startRouter, refresh, navigate } from './app/router.js';
-import { keepScreenOn } from './app/device.js';
+import { keepScreenOn, setPlayInSilent } from './app/device.js';
 import { onDbEvent, StorageError } from './db/db.js';
 import { getActiveSession } from './db/repos/sessions.js';
 import { registerServiceWorker } from './pwa/register.js';
@@ -93,6 +93,11 @@ async function boot() {
     mount(viewEl, fatal(err instanceof StorageError ? `errors.${err.code}` : 'errors.generic'));
     return;
   }
+
+  setPlayInSilent(app.settings.sound && app.settings.soundInSilent);
+  on('settings', (patch) => {
+    if ('sound' in patch || 'soundInSilent' in patch) setPlayInSilent(app.settings.sound && app.settings.soundInSilent);
+  });
 
   renderTabbar();
   on('lang', () => {
