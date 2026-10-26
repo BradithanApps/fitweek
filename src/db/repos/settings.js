@@ -9,6 +9,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   restWeekdays: [5, 6],
   sound: true,
   soundInSilent: false,
+  installDismissedAt: null, // «Ahora no» en el aviso de instalar
   lastBackupAt: null,
   onboarded: false,
   todayPick: null, // { date, dayId } elección manual del Día de hoy

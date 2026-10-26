@@ -12,6 +12,8 @@ import { cleanName } from '../domain/text.js';
 import { readAll, writeAll, eraseAll } from '../db/data.js';
 import { storageInfo, requestPersistence } from '../db/db.js';
 import { testSound, canPlayInSilent } from '../app/device.js';
+import { installMode } from '../pwa/install.js';
+import { startInstall } from './install.js';
 
 export default async function SettingsView({ refresh }) {
   const st = app.settings;
@@ -143,6 +145,7 @@ export default async function SettingsView({ refresh }) {
     'section',
     { class: 'card divide-y divide-line text-[15px]' },
     aboutRow(t('settings.version'), __APP_VERSION__),
+    installRow(),
     aboutRow(t('settings.offline'), offline ? t('settings.offlineYes') : t('settings.offlineNo')),
     aboutRow(t('settings.storage'), info.usage != null ? `${(info.usage / 1024 / 1024).toFixed(1)} MB` : '—'),
     h(
@@ -179,6 +182,18 @@ export default async function SettingsView({ refresh }) {
     sectionTitle(t('settings.about')),
     about,
     h('p', { class: 'mt-6 px-1 text-center text-xs text-faint' }, t('settings.privacy')),
+  );
+}
+
+function installRow() {
+  const mode = installMode();
+  if (mode === 'installed') return aboutRow(t('install.settingsLabel'), t('install.installed'));
+  if (!mode) return null;
+  return h(
+    'div',
+    { class: 'flex items-center justify-between gap-3 px-4 py-3' },
+    h('span', { class: 'text-muted' }, t('install.settingsLabel')),
+    h('button', { type: 'button', class: 'btn btn-primary min-h-9 px-3 text-sm', onClick: () => startInstall({ hasData: true }) }, icon('download', 'size-4'), t('install.button')),
   );
 }
 

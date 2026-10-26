@@ -12,8 +12,9 @@ import { weeklyGoal, trainedDaysInWeek, weekVolume, streakWeeks, sessionVolume, 
 import { listDays } from '../db/repos/cycle.js';
 import { listSessions, getActiveSession } from '../db/repos/sessions.js';
 import { greetingKey, dayLabel } from './shared.js';
+import { installCard } from './install.js';
 
-export default async function HomeView() {
+export default async function HomeView({ refresh }) {
   const [days, sessions, active] = await Promise.all([listDays(), listSessions(), getActiveSession()]);
   const st = app.settings;
   const today = toKey();
@@ -112,7 +113,9 @@ export default async function HomeView() {
         )
       : null;
 
-  return h('div', { class: 'pb-4' }, head, strip, h('div', { class: 'mt-4' }, main), stats, next, backup);
+  const install = installCard({ hasData: doneSessions(sessions).length > 0, onChange: refresh });
+
+  return h('div', { class: 'pb-4' }, head, strip, install, h('div', { class: 'mt-4' }, main), stats, next, backup);
 }
 
 function logo() {

@@ -87,13 +87,14 @@ FitWeek funciona con un **ciclo de Días**. Armás tu rutina una vez (Día 1 Pie
 
 ---
 
-## Instalarla en tu iPhone
+## Instalarla
 
-1. Abrí **[bradithanapps.github.io/fitweek](https://bradithanapps.github.io/fitweek/)** en **Safari**.
-2. Tocá **Compartir** → **Añadir a pantalla de inicio**.
-3. Abrila desde el ícono una vez con conexión. A partir de ahí funciona sin internet.
+Abrí **[bradithanapps.github.io/fitweek](https://bradithanapps.github.io/fitweek/)** en el celular. En Inicio aparece el aviso **Instalá FitWeek**:
 
-En **Android**, abrila en Chrome y tocá **Instalar app**.
+- **Android (Chrome, Edge, Samsung Internet):** tocá **Instalar** y confirmá. Queda como cualquier otra app.
+- **iPhone (Safari):** Apple no permite instalar con un botón, así que la app te muestra los pasos: **Compartir** → **Añadir a pantalla de inicio** → **Añadir**.
+
+Abrila una vez con conexión desde el ícono. A partir de ahí funciona sin internet.
 
 > Tus datos viven en tu teléfono. Si borrás la app, se pierden: usá **Ajustes → Exportar respaldo** de vez en cuando.
 

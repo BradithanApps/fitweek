@@ -1,9 +1,11 @@
+// Primero: escuchar el evento de instalación lo antes posible.
+import { onInstallChange } from './pwa/install.js';
 import { h, mount } from './ui/dom.js';
 import { icon } from './ui/icons.js';
 import { toast } from './ui/components/toast.js';
 import { t, setLang, detectLang } from './i18n/index.js';
 import { app, initSettings, on } from './app/state.js';
-import { route, setNotFound, startRouter, refresh, navigate } from './app/router.js';
+import { route, setNotFound, startRouter, refresh, navigate, currentPath } from './app/router.js';
 import { keepScreenOn, setPlayInSilent } from './app/device.js';
 import { onDbEvent, StorageError } from './db/db.js';
 import { getActiveSession } from './db/repos/sessions.js';
@@ -97,6 +99,11 @@ async function boot() {
   setPlayInSilent(app.settings.sound && app.settings.soundInSilent);
   on('settings', (patch) => {
     if ('sound' in patch || 'soundInSilent' in patch) setPlayInSilent(app.settings.sound && app.settings.soundInSilent);
+  });
+
+  // Si el navegador habilita (o termina) la instalación, actualizar Inicio y Ajustes.
+  onInstallChange(() => {
+    if (['/', '/settings'].includes(currentPath())) refresh();
   });
 
   renderTabbar();

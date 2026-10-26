@@ -17,7 +17,7 @@ function walk(dir) {
 
 const files = walk(DIST)
   .map((p) => relative(DIST, p).split(sep).join('/'))
-  .filter((p) => !SKIP.has(p))
+  .filter((p) => !SKIP.has(p) && !p.startsWith('screenshots/')) // las capturas solo se usan en el diálogo de instalación
   .sort();
 
 const hash = createHash('sha256');
